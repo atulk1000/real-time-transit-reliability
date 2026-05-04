@@ -250,6 +250,3 @@ src/            Application, ingestion, streaming, API, dashboard code
 tests/          Unit and integration tests
 ```
 
-## Resume Bullet
-
-Built a real-time WMATA Metro dashboard using Redpanda/Kafka, Spark Structured Streaming, Postgres, and Streamlit to transform live train-position, station, line, and route reference feeds into current train board and historical reliability views.
