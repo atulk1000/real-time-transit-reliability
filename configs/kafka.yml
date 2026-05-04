@@ -1,0 +1,26 @@
+kafka:
+  local_bootstrap_servers: "localhost:19092"
+  docker_bootstrap_servers: "redpanda:9092"
+
+topics:
+  train_positions:
+    name: "wmata.train_positions.raw"
+    partitions: 3
+    key_field: "train_id"
+    source_name: "train_positions"
+  lines:
+    name: "wmata.lines.raw"
+    partitions: 1
+    key_field: "source_name"
+    source_name: "lines"
+  stations:
+    name: "wmata.stations.raw"
+    partitions: 1
+    key_field: "source_name"
+    source_name: "stations"
+  standard_routes:
+    name: "wmata.standard_routes.raw"
+    partitions: 1
+    key_field: "source_name"
+    source_name: "standard_routes"
+

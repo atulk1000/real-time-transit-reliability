@@ -1,0 +1,39 @@
+agency:
+  id: wmata
+  name: Washington Metropolitan Area Transit Authority
+  timezone: America/New_York
+
+api:
+  base_url: "https://api.wmata.com"
+  fallback_key_env_var: "WMATA_API_KEY"
+  key_header_name: "api_key"
+  verify_ssl_env_var: "WMATA_VERIFY_SSL"
+
+sources:
+  train_positions:
+    endpoint: "/TrainPositions/TrainPositions"
+    key_env_var: "WMATA_TRAIN_POSITIONS_API_KEY"
+    params:
+      contentType: "json"
+    raw_table: "bronze_wmata_train_positions"
+  standard_routes:
+    endpoint: "/TrainPositions/StandardRoutes"
+    key_env_var: "WMATA_TRAIN_POSITIONS_API_KEY"
+    params:
+      contentType: "json"
+    raw_table: "bronze_wmata_standard_routes"
+  stations:
+    endpoint: "/Rail.svc/json/jStations"
+    key_env_var: "WMATA_RAIL_STATION_API_KEY"
+    params: {}
+    raw_table: "bronze_wmata_stations"
+  lines:
+    endpoint: "/Rail.svc/json/jLines"
+    key_env_var: "WMATA_RAIL_STATION_API_KEY"
+    params: {}
+    raw_table: "bronze_wmata_lines"
+
+polling:
+  train_positions_seconds: 10
+  reference_refresh_hours: 24
+  stale_after_seconds: 45

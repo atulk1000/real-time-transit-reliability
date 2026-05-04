@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "transit-reliability"
+version = "0.1.0"
+description = "Real-time public transit reliability pipeline and dashboard."
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.115",
+  "kafka-python>=2.0",
+  "pandas>=2.2",
+  "plotly>=5.24",
+  "psycopg[binary]>=3.2",
+  "pydantic>=2.8",
+  "python-dotenv>=1.0",
+  "python-dateutil>=2.9",
+  "pyyaml>=6.0",
+  "requests>=2.32",
+  "streamlit>=1.38",
+  "uvicorn>=0.30"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

@@ -1,0 +1,180 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: transit_reliability
+      POSTGRES_USER: transit
+      POSTGRES_PASSWORD: transit
+    ports:
+      - "55432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U transit -d transit_reliability"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redpanda:
+    image: redpandadata/redpanda:v24.3.6
+    command:
+      - redpanda
+      - start
+      - --mode
+      - dev-container
+      - --smp
+      - "1"
+      - --memory
+      - 1G
+      - --reserve-memory
+      - 0M
+      - --overprovisioned
+      - --node-id
+      - "0"
+      - --check=false
+      - --kafka-addr
+      - internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr
+      - internal://redpanda:9092,external://localhost:19092
+    ports:
+      - "19092:19092"
+      - "9644:9644"
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -E 'Healthy:.+true'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  redpanda-console:
+    image: redpandadata/console:v2.8.4
+    environment:
+      KAFKA_BROKERS: redpanda:9092
+    ports:
+      - "8080:8080"
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  redpanda-init:
+    image: redpandadata/redpanda:v24.3.6
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        rpk topic create wmata.train_positions.raw --brokers redpanda:9092 --partitions 3 --replicas 1 || true;
+        rpk topic create wmata.lines.raw --brokers redpanda:9092 --partitions 1 --replicas 1 || true;
+        rpk topic create wmata.stations.raw --brokers redpanda:9092 --partitions 1 --replicas 1 || true;
+        rpk topic create wmata.standard_routes.raw --brokers redpanda:9092 --partitions 1 --replicas 1 || true;
+
+  spark:
+    build:
+      context: .
+      dockerfile: docker/spark/Dockerfile
+    environment:
+      PYTHONPATH: /app/src
+      SPARK_KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      DATABASE_URL: postgresql://transit:transit@postgres:5432/transit_reliability
+      SPARK_DATABASE_URL: postgresql://transit:transit@postgres:5432/transit_reliability
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+
+  spark-reference-stream:
+    build:
+      context: .
+      dockerfile: docker/spark/Dockerfile
+    command:
+      - /opt/spark/bin/spark-submit
+      - --conf
+      - spark.jars.ivy=/tmp/.ivy2
+      - --packages
+      - org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.5
+      - spark_jobs/reference_snapshots_stream.py
+    environment:
+      PYTHONPATH: /app/src
+      SPARK_KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      DATABASE_URL: postgresql://transit:transit@postgres:5432/transit_reliability
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+
+  spark-train-stream:
+    build:
+      context: .
+      dockerfile: docker/spark/Dockerfile
+    command:
+      - /opt/spark/bin/spark-submit
+      - --conf
+      - spark.jars.ivy=/tmp/.ivy2
+      - --packages
+      - org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.5
+      - spark_jobs/train_positions_stream.py
+    environment:
+      PYTHONPATH: /app/src
+      SPARK_KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      DATABASE_URL: postgresql://transit:transit@postgres:5432/transit_reliability
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+
+  producer:
+    build:
+      context: .
+      dockerfile: docker/python/Dockerfile
+    command:
+      - python
+      - -m
+      - transit_reliability.ingestion.kafka_producer
+      - --refresh-reference
+    environment:
+      PYTHONPATH: /app/src
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/python/Dockerfile
+    command:
+      - streamlit
+      - run
+      - src/transit_reliability/dashboard/app.py
+      - --server.address=0.0.0.0
+      - --server.port=8501
+    environment:
+      PYTHONPATH: /app/src
+      DATABASE_URL: postgresql://transit:transit@postgres:5432/transit_reliability
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
