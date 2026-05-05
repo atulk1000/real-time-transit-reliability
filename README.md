@@ -41,6 +41,38 @@ WMATA Rail APIs
   -> Streamlit dashboard
 ```
 
+## Production-Style vs. Demo-Limited
+
+This repo is designed as a portfolio-grade local streaming system, not a claim that WMATA-scale
+data needs a large cluster.
+
+Production-style pieces:
+
+- Source-specific Kafka topics for train positions, lines, stations, and route circuits.
+- Bronze JSONB retention, typed silver tables, and dashboard-ready gold tables.
+- Postgres partitioning on the highest-growth bronze table.
+- Spark Structured Streaming checkpoints for replayable local streams.
+- Feed-health and historical activity tables for operational monitoring.
+- Unit and integration tests for transforms, API behavior, Kafka envelopes, topics, and sinks.
+
+Demo-limited pieces:
+
+- Spark `foreachBatch` currently collects each micro-batch to the driver before writing to Postgres.
+  That is acceptable for a small WMATA local demo, but it is not the scalable sink pattern to use for
+  high-volume streaming data.
+- The dashboard focuses on train positions and reference data. ETA and incident feeds are excluded
+  intentionally to keep the first public version focused and reviewable.
+- The default Docker Compose setup runs one local Spark worker and one local Redpanda broker.
+
+Production upgrade path:
+
+- Replace driver-side `collect()` writes with partition-wise writes, a JDBC sink strategy, or a
+  dedicated sink connector.
+- Add idempotent batch metadata and dead-letter handling for malformed records.
+- Move long-term history to partitioned analytical storage such as Delta/Iceberg or warehouse tables.
+- Add alerting on feed lag, invalid records, duplicate rates, and stale-train thresholds.
+- Scale Kafka partitions and Spark executors based on measured throughput, not guesswork.
+
 ## Data Sources
 
 Required WMATA API products:
@@ -153,6 +185,18 @@ Check row counts:
 .\scripts\check_counts.ps1
 ```
 
+Run a timed benchmark:
+
+```powershell
+.\scripts\benchmark_v2.ps1 -DurationMinutes 30
+```
+
+For a quick demo rehearsal, use a shorter run:
+
+```powershell
+.\scripts\benchmark_v2.ps1 -DurationSeconds 120
+```
+
 ## Stage 1 Quick Demo
 
 Fastest product demo without Kafka/Spark:
@@ -221,12 +265,40 @@ Streamlit tabs:
 
 The historical tab is populated by the V2 Spark train-position stream.
 
+## Reliability Metrics
+
+Current metrics:
+
+- Active trains by line.
+- Stale trains by line.
+- Location-unavailable train count.
+- Normal vs. no-passenger train count.
+- Feed health by source.
+- Historical line activity windows.
+
+Next metrics to add:
+
+- Feed lag in seconds.
+- Invalid-record rate.
+- Duplicate-event rate.
+- Per-line service freshness trend.
+- Train count variance by line over time.
+- Station coverage and headway variance when the project adds station arrival or ETA feeds.
+
 ## Tests
 
 Run unit tests:
 
 ```powershell
 pytest
+```
+
+Run formatting and lint checks:
+
+```powershell
+black --check src tests spark_jobs
+isort --check-only src tests spark_jobs
+ruff check .
 ```
 
 Run full Postgres integration checks against a disposable/resettable local database:
