@@ -14,13 +14,11 @@ def health() -> dict[str, str]:
 def current_trains() -> list[dict]:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                """
+            cur.execute("""
                 SELECT *
                 FROM gold_current_train_board
                 ORDER BY line_code, direction_num, train_number, train_id
-                """
-            )
+                """)
             return cur.fetchall()
 
 
@@ -28,8 +26,7 @@ def current_trains() -> list[dict]:
 def route_reliability() -> list[dict]:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                """
+            cur.execute("""
                 SELECT
                     line_code,
                     COALESCE(line_name, line_code) AS line_name,
@@ -39,8 +36,7 @@ def route_reliability() -> list[dict]:
                 FROM gold_current_train_board
                 GROUP BY line_code, line_name
                 ORDER BY line_code
-                """
-            )
+                """)
             return cur.fetchall()
 
 
@@ -56,14 +52,12 @@ def feed_health() -> list[dict]:
 def line_activity_history() -> list[dict]:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                """
+            cur.execute("""
                 SELECT *
                 FROM gold_line_activity_history
                 ORDER BY window_start DESC, line_code
                 LIMIT 1000
-                """
-            )
+                """)
             return cur.fetchall()
 
 
@@ -71,12 +65,10 @@ def line_activity_history() -> list[dict]:
 def feed_health_history() -> list[dict]:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                """
+            cur.execute("""
                 SELECT *
                 FROM gold_feed_health_history
                 ORDER BY observed_at DESC, source_name
                 LIMIT 1000
-                """
-            )
+                """)
             return cur.fetchall()

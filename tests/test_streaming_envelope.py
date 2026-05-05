@@ -46,4 +46,3 @@ def test_snapshot_message_preserves_reference_response_body() -> None:
     assert message.value["payload_kind"] == "snapshot"
     assert message.value["response_body"]["Lines"][0]["LineCode"] == "RD"
     assert message.value["record_count"] == 1
-

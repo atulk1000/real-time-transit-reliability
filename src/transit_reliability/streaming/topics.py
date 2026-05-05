@@ -31,4 +31,3 @@ def train_position_key(record: dict[str, Any], ingestion_batch_id: str) -> str:
 
 def snapshot_key(source_name: str, ingestion_batch_id: str) -> str:
     return f"{source_name}:{ingestion_batch_id}"
-

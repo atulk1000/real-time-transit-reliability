@@ -1,2 +1,1 @@
 """Kafka/Redpanda streaming helpers."""
-

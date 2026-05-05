@@ -10,4 +10,3 @@ def test_direction_label_handles_unknown_values() -> None:
     assert direction_label(None) is None
     assert direction_label(0) is None
     assert direction_label(3) is None
-

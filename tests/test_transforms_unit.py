@@ -59,4 +59,3 @@ def test_freshness_status_marks_old_records_stale() -> None:
     old = datetime.now(timezone.utc) - timedelta(seconds=90)
 
     assert freshness_status(old, stale_after_seconds=45) == "stale"
-

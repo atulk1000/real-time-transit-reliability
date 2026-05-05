@@ -14,7 +14,6 @@ from transit_reliability.transforms.refresh import (
     route_position,
 )
 
-
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 
 
@@ -195,9 +194,7 @@ def test_refresh_current_train_board_applies_display_defaults_and_enrichment(con
     )
 
     refresh_current_train_board(conn, {"polling": {"stale_after_seconds": 45}})
-    rows = conn.execute(
-        "SELECT * FROM gold_current_train_board ORDER BY train_id"
-    ).fetchall()
+    rows = conn.execute("SELECT * FROM gold_current_train_board ORDER BY train_id").fetchall()
 
     assert rows[0]["line_code"] == "RD"
     assert rows[0]["line_name"] == "Red"

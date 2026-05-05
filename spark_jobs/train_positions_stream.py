@@ -17,10 +17,7 @@ def main() -> None:
         "/tmp/transit-reliability/checkpoints/train_positions",
     )
 
-    spark = (
-        SparkSession.builder.appName("wmata-train-positions-stream")
-        .getOrCreate()
-    )
+    spark = SparkSession.builder.appName("wmata-train-positions-stream").getOrCreate()
     spark.sparkContext.setLogLevel("WARN")
 
     messages = (

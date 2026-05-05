@@ -17,7 +17,6 @@ from transit_reliability.transforms.refresh import (
     validate_train_position,
 )
 
-
 RAW_TABLES = {
     "train_positions": "bronze_wmata_train_positions",
     "standard_routes": "bronze_wmata_standard_routes",
@@ -99,7 +98,9 @@ def insert_train_position_bronze(conn: Connection, envelope: dict[str, Any]) -> 
         return cur.fetchone()["id"]
 
 
-def insert_train_position_silver(conn: Connection, source_raw_id: int, envelope: dict[str, Any]) -> None:
+def insert_train_position_silver(
+    conn: Connection, source_raw_id: int, envelope: dict[str, Any]
+) -> None:
     record = envelope.get("record") or {}
     is_valid, validation_error = validate_train_position(record)
     with conn.cursor() as cur:

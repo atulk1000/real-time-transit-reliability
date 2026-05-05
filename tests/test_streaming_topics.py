@@ -1,4 +1,9 @@
-from transit_reliability.streaming.topics import snapshot_key, topic_for_source, topic_partitions, train_position_key
+from transit_reliability.streaming.topics import (
+    snapshot_key,
+    topic_for_source,
+    topic_partitions,
+    train_position_key,
+)
 
 
 def test_topic_config_matches_v2_partition_plan() -> None:
@@ -26,4 +31,3 @@ def test_train_position_key_falls_back_to_batch_id() -> None:
 
 def test_snapshot_key_namespaces_reference_batches() -> None:
     assert snapshot_key("stations", "batch-1") == "stations:batch-1"
-

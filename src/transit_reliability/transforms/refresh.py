@@ -122,7 +122,8 @@ def refresh_route_circuits(conn: Connection) -> None:
                 cur.execute(
                     """
                     INSERT INTO silver_route_circuits (
-                        line_code, track_num, seq_num, circuit_id, station_code, source_raw_id, loaded_at
+                        line_code, track_num, seq_num, circuit_id,
+                        station_code, source_raw_id, loaded_at
                     )
                     VALUES (%s, %s, %s, %s, %s, %s, now())
                     ON CONFLICT (line_code, track_num, seq_num, circuit_id) DO UPDATE SET
@@ -209,7 +210,9 @@ def line_row(conn: Connection, line_code: str | None) -> dict[str, Any] | None:
         return cur.fetchone()
 
 
-def route_position(conn: Connection, line_code: str | None, direction_num: int | None, circuit_id: int | None) -> dict[str, Any]:
+def route_position(
+    conn: Connection, line_code: str | None, direction_num: int | None, circuit_id: int | None
+) -> dict[str, Any]:
     if not line_code or direction_num is None or circuit_id is None:
         return {}
     with conn.cursor() as cur:
@@ -301,14 +304,12 @@ def infer_origin(line: dict[str, Any] | None, destination_station_code: str | No
 def refresh_current_train_board(conn: Connection, config: dict[str, Any]) -> None:
     stale_after_seconds = config["polling"]["stale_after_seconds"]
     with conn.cursor() as cur:
-        cur.execute(
-            """
+        cur.execute("""
             SELECT DISTINCT ON (train_id) *
             FROM silver_train_position_events
             WHERE is_valid = true AND train_id IS NOT NULL
             ORDER BY train_id, fetched_at DESC
-            """
-        )
+            """)
         latest_events = cur.fetchall()
         cur.execute("TRUNCATE gold_current_train_board")
 
@@ -336,7 +337,10 @@ def refresh_current_train_board(conn: Connection, config: dict[str, Any]) -> Non
                     direction_label, car_count, service_status, seconds_at_location,
                     last_seen_at, refreshed_at, freshness_status
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now(), %s)
+                VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, now(), %s
+                )
                 """,
                 (
                     event["train_id"],
@@ -399,7 +403,9 @@ def refresh_feed_health(conn: Connection) -> None:
             )
 
 
-def refresh_line_activity_history(conn: Connection, window_start: datetime, window_end: datetime) -> None:
+def refresh_line_activity_history(
+    conn: Connection, window_start: datetime, window_end: datetime
+) -> None:
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -415,7 +421,9 @@ def refresh_line_activity_history(conn: Connection, window_start: datetime, wind
                 MAX(line_name) AS line_name,
                 COUNT(*) AS active_trains,
                 COUNT(*) FILTER (WHERE freshness_status = 'stale') AS stale_trains,
-                COUNT(*) FILTER (WHERE current_location = 'Location unavailable') AS location_unavailable_trains,
+                COUNT(*) FILTER (
+                    WHERE current_location = 'Location unavailable'
+                ) AS location_unavailable_trains,
                 COUNT(*) FILTER (WHERE service_status = 'Normal') AS normal_service_trains,
                 COUNT(*) FILTER (WHERE service_status = 'NoPassengers') AS no_passenger_trains,
                 now() AS refreshed_at

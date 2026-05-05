@@ -12,10 +12,13 @@ from dotenv import load_dotenv
 
 from transit_reliability.config import load_config
 from transit_reliability.ingestion.worker import env_bool, source_api_key
-from transit_reliability.streaming.envelope import KafkaMessage, snapshot_message, train_position_messages
+from transit_reliability.streaming.envelope import (
+    KafkaMessage,
+    snapshot_message,
+    train_position_messages,
+)
 from transit_reliability.streaming.topics import load_kafka_config
 from transit_reliability.wmata_client import WmataClient
-
 
 load_dotenv()
 

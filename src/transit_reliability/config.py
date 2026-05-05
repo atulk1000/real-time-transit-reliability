@@ -14,4 +14,3 @@ def load_config(path: str | Path | None = None) -> dict[str, Any]:
     config_path = Path(path) if path else project_root() / "configs" / "agency.yml"
     with config_path.open("r", encoding="utf-8") as handle:
         return yaml.safe_load(handle)
-

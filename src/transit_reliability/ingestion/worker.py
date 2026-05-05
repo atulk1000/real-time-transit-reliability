@@ -17,7 +17,6 @@ from transit_reliability.db import get_connection
 from transit_reliability.transforms.refresh import refresh_all
 from transit_reliability.wmata_client import WmataClient
 
-
 SOURCE_RECORD_KEYS = {
     "train_positions": "TrainPositions",
     "standard_routes": "StandardRoutes",
@@ -151,7 +150,9 @@ def main() -> None:
 
         interval = config["polling"]["train_positions_seconds"]
         while True:
-            poll_source(conn, client, config, "train_positions", config["sources"]["train_positions"])
+            poll_source(
+                conn, client, config, "train_positions", config["sources"]["train_positions"]
+            )
             refresh_all(conn, config)
             conn.commit()
             if args.once:

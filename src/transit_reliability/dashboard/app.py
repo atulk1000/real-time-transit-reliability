@@ -17,22 +17,22 @@ def query(sql: str) -> pd.DataFrame:
 st.set_page_config(page_title="Train Reliability", layout="wide")
 st.title("WMATA Metro Train Board")
 
-snapshot = query("SELECT * FROM gold_current_train_board ORDER BY line_code, direction_num, train_number, train_id")
+snapshot = query("""
+    SELECT *
+    FROM gold_current_train_board
+    ORDER BY line_code, direction_num, train_number, train_id
+    """)
 feed_health = query("SELECT * FROM gold_feed_health ORDER BY source_name")
-line_history = query(
-    """
+line_history = query("""
     SELECT *
     FROM gold_line_activity_history
     ORDER BY window_start
-    """
-)
-feed_history = query(
-    """
+    """)
+feed_history = query("""
     SELECT *
     FROM gold_feed_health_history
     ORDER BY observed_at
-    """
-)
+    """)
 
 if snapshot.empty:
     st.info("No train board data yet. Run the ingestion worker with --refresh-reference --once.")
@@ -45,7 +45,9 @@ service_lines = snapshot[snapshot["line_code"] != "UNASSIGNED"]
 lines_active = service_lines["line_code"].nunique()
 unassigned = int((snapshot["line_code"] == "UNASSIGNED").sum())
 
-current_tab, history_tab, feed_tab = st.tabs(["Current Train Board", "Historical Metrics", "Feed Health"])
+current_tab, history_tab, feed_tab = st.tabs(
+    ["Current Train Board", "Historical Metrics", "Feed Health"]
+)
 
 with current_tab:
     col1, col2, col3, col4, col5 = st.columns(5)
@@ -77,7 +79,9 @@ with current_tab:
     selected_line = st.selectbox("Line", line_codes)
     board = snapshot if selected_line == "All" else snapshot[snapshot["line_code"] == selected_line]
     board = board.copy()
-    board["direction_label"] = board["direction_num"].map(direction_label).fillna(board["direction_label"])
+    board["direction_label"] = (
+        board["direction_num"].map(direction_label).fillna(board["direction_label"])
+    )
 
     columns = [
         "line_code",
@@ -99,7 +103,9 @@ with current_tab:
 with history_tab:
     st.subheader("Historical Line Activity")
     if line_history.empty:
-        st.info("No historical metrics yet. Run the V2 Spark train-position stream to populate history.")
+        st.info(
+            "No historical metrics yet. Run the V2 Spark train-position stream to populate history."
+        )
     else:
         line_history["window_start"] = pd.to_datetime(line_history["window_start"])
         st.plotly_chart(
@@ -122,7 +128,11 @@ with history_tab:
             ),
             use_container_width=True,
         )
-        st.dataframe(line_history.sort_values(["window_start", "line_code"], ascending=[False, True]), use_container_width=True, hide_index=True)
+        st.dataframe(
+            line_history.sort_values(["window_start", "line_code"], ascending=[False, True]),
+            use_container_width=True,
+            hide_index=True,
+        )
 
 with feed_tab:
     st.subheader("Current Feed Health")
@@ -131,4 +141,8 @@ with feed_tab:
     if feed_history.empty:
         st.info("No feed-health history yet.")
     else:
-        st.dataframe(feed_history.sort_values(["observed_at", "source_name"], ascending=[False, True]), use_container_width=True, hide_index=True)
+        st.dataframe(
+            feed_history.sort_values(["observed_at", "source_name"], ascending=[False, True]),
+            use_container_width=True,
+            hide_index=True,
+        )

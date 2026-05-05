@@ -103,4 +103,3 @@ def snapshot_message(
             "response_body": payload,
         },
     )
-
