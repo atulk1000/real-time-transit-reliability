@@ -1,0 +1,5 @@
+ board_rows | fresh_rows | stale_rows | fresh_p50_seconds | fresh_p95_seconds | latest_board_lag_seconds 
+------------+------------+------------+-------------------+-------------------+--------------------------
+        237 |        106 |        131 |                 9 |                 9 |                        9
+(1 row)
+

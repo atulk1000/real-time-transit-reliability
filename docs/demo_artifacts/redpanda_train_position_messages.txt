@@ -1,0 +1,16 @@
+{
+  "topic": "wmata.train_positions.raw",
+  "key": "297",
+  "value": "{\"message_version\":1,\"source_name\":\"train_positions\",\"endpoint\":\"/TrainPositions/TrainPositions\",\"request_params\":{\"contentType\":\"json\"},\"fetched_at\":\"2026-05-15T14:19:51.380933+00:00\",\"ingestion_batch_id\":\"856b4570-902e-4007-beb7-198b0dc41453\",\"response_status\":200,\"record_count\":109,\"content_hash\":\"01cf7613ff974fed8a9e6a7ae5fae44691d20925c22623311b7988dfc124ab87\",\"payload_kind\":\"record\",\"record_index\":3,\"record\":{\"TrainId\":\"297\",\"TrainNumber\":\"000\",\"CarCount\":0,\"DirectionNum\":1,\"CircuitId\":3577,\"DestinationStationCode\":null,\"LineCode\":null,\"SecondsAtLocation\":6,\"ServiceType\":\"Unknown\"}}",
+  "timestamp": 1778854791617,
+  "partition": 2,
+  "offset": 10655
+}
+{
+  "topic": "wmata.train_positions.raw",
+  "key": "318",
+  "value": "{\"message_version\":1,\"source_name\":\"train_positions\",\"endpoint\":\"/TrainPositions/TrainPositions\",\"request_params\":{\"contentType\":\"json\"},\"fetched_at\":\"2026-05-15T14:19:51.380933+00:00\",\"ingestion_batch_id\":\"856b4570-902e-4007-beb7-198b0dc41453\",\"response_status\":200,\"record_count\":109,\"content_hash\":\"01cf7613ff974fed8a9e6a7ae5fae44691d20925c22623311b7988dfc124ab87\",\"payload_kind\":\"record\",\"record_index\":4,\"record\":{\"TrainId\":\"318\",\"TrainNumber\":\"000\",\"CarCount\":0,\"DirectionNum\":1,\"CircuitId\":1834,\"DestinationStationCode\":null,\"LineCode\":null,\"SecondsAtLocation\":48,\"ServiceType\":\"Unknown\"}}",
+  "timestamp": 1778854791617,
+  "partition": 2,
+  "offset": 10656
+}

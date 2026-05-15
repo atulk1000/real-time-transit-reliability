@@ -1,0 +1,5 @@
+NAME                       PARTITIONS  REPLICAS
+wmata.lines.raw            1           1
+wmata.standard_routes.raw  1           1
+wmata.stations.raw         1           1
+wmata.train_positions.raw  3           1

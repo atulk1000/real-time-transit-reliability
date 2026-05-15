@@ -1,0 +1,23 @@
+Benchmark result
+----------------
+Run date: 2026-05-15
+Elapsed seconds:          1,803
+Bronze rows ingested:     18,845
+Silver records produced:  18,845
+Silver records / second:  10.45
+Line history rows added:  210
+Feed history rows added:  700
+Latest silver lag seconds at end: 11
+
+Dashboard freshness query after the run
+---------------------------------------
+ board_rows | fresh_rows | stale_rows | fresh_p50_seconds | fresh_p95_seconds | latest_board_lag_seconds
+------------+------------+------------+-------------------+-------------------+--------------------------
+        237 |        106 |        131 |                 9 |                 9 |                        9
+(1 row)
+
+Interpretation
+--------------
+The timed benchmark measures local demo throughput. Dashboard freshness P50/P95 is calculated only
+for rows currently marked fresh. Stale rows are tracked separately as a reliability metric rather
+than folded into freshness latency.

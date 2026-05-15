@@ -265,6 +265,9 @@ Streamlit tabs:
 
 The historical tab is populated by the V2 Spark train-position stream.
 
+See [docs/demo_run.md](docs/demo_run.md) for a captured local run with row counts, benchmark
+output, dashboard screenshots, Redpanda topic evidence, and Postgres gold-table query evidence.
+
 ## Reliability Metrics
 
 Current metrics:

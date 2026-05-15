@@ -1,6 +1,7 @@
 param(
     [int]$DurationMinutes = 30,
-    [int]$DurationSeconds = 0
+    [int]$DurationSeconds = 0,
+    [int]$SampleIntervalSeconds = 10
 )
 
 $ErrorActionPreference = "Stop"
@@ -13,6 +14,10 @@ if ($TotalSeconds -le 0) {
     throw "Benchmark duration must be greater than zero seconds."
 }
 
+if ($SampleIntervalSeconds -le 0) {
+    throw "Sample interval must be greater than zero seconds."
+}
+
 $Query = @"
 SELECT
     (SELECT count(*) FROM bronze_wmata_train_positions),
@@ -22,6 +27,20 @@ SELECT
     COALESCE((
         SELECT EXTRACT(EPOCH FROM (now() - max(fetched_at)))::int
         FROM silver_train_position_events
+    ), -1),
+    COALESCE((
+        SELECT EXTRACT(EPOCH FROM percentile_cont(0.50) WITHIN GROUP (
+            ORDER BY now() - last_seen_at
+        ))::int
+        FROM gold_current_train_board
+        WHERE freshness_status = 'fresh'
+    ), -1),
+    COALESCE((
+        SELECT EXTRACT(EPOCH FROM percentile_cont(0.95) WITHIN GROUP (
+            ORDER BY now() - last_seen_at
+        ))::int
+        FROM gold_current_train_board
+        WHERE freshness_status = 'fresh'
     ), -1);
 "@
 
@@ -42,7 +61,25 @@ function Get-BenchmarkSnapshot {
         LineActivityHistory = [int64]$parts[2]
         FeedHealthHistory = [int64]$parts[3]
         LatestSilverLagSeconds = [int]$parts[4]
+        DashboardFreshnessP50Seconds = [int]$parts[5]
+        DashboardFreshnessP95Seconds = [int]$parts[6]
     }
+}
+
+function Get-Percentile {
+    param(
+        [int[]]$Values,
+        [double]$Percentile
+    )
+
+    if ($Values.Count -eq 0) {
+        return -1
+    }
+
+    $sorted = $Values | Sort-Object
+    $rank = [Math]::Ceiling(($Percentile / 100) * $sorted.Count) - 1
+    $index = [Math]::Max(0, [Math]::Min($rank, $sorted.Count - 1))
+    return $sorted[$index]
 }
 
 Write-Host "Starting V2 benchmark for $TotalSeconds seconds."
@@ -50,12 +87,27 @@ Write-Host "Make sure Redpanda, Spark streams, Postgres, and the producer are ru
 Write-Host ""
 
 $start = Get-BenchmarkSnapshot
-Start-Sleep -Seconds $TotalSeconds
+$samples = @($start)
+$deadline = (Get-Date).AddSeconds($TotalSeconds)
+
+while ((Get-Date) -lt $deadline) {
+    $remainingSeconds = [int][Math]::Ceiling(($deadline - (Get-Date)).TotalSeconds)
+    Start-Sleep -Seconds ([Math]::Min($SampleIntervalSeconds, $remainingSeconds))
+    $samples += Get-BenchmarkSnapshot
+}
+
 $end = Get-BenchmarkSnapshot
+$samples += $end
 
 $elapsedSeconds = ($end.CapturedAt - $start.CapturedAt).TotalSeconds
 $silverDelta = $end.SilverTrainPositionEvents - $start.SilverTrainPositionEvents
 $bronzeDelta = $end.BronzeTrainPositions - $start.BronzeTrainPositions
+$freshnessP50 = Get-Percentile `
+    -Values ($samples | ForEach-Object { $_.DashboardFreshnessP50Seconds } | Where-Object { $_ -ge 0 }) `
+    -Percentile 50
+$freshnessP95 = Get-Percentile `
+    -Values ($samples | ForEach-Object { $_.DashboardFreshnessP95Seconds } | Where-Object { $_ -ge 0 }) `
+    -Percentile 95
 
 Write-Host ""
 Write-Host "Benchmark result"
@@ -67,6 +119,8 @@ Write-Host ("Silver records / second:  {0:N2}" -f ($silverDelta / $elapsedSecond
 Write-Host ("Line history rows added:  {0:N0}" -f ($end.LineActivityHistory - $start.LineActivityHistory))
 Write-Host ("Feed history rows added:  {0:N0}" -f ($end.FeedHealthHistory - $start.FeedHealthHistory))
 Write-Host ("Latest silver lag seconds at end: {0}" -f $end.LatestSilverLagSeconds)
+Write-Host ("Fresh dashboard-row freshness P50 seconds:  {0}" -f $freshnessP50)
+Write-Host ("Fresh dashboard-row freshness P95 seconds:  {0}" -f $freshnessP95)
 Write-Host ""
 Write-Host "Start snapshot:"
 $start | Format-List
