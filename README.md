@@ -1,5 +1,7 @@
 # Real-Time WMATA Metro Reliability Pipeline
 
+[![CI](https://github.com/atulk1000/real-time-transit-reliability/actions/workflows/ci.yml/badge.svg)](https://github.com/atulk1000/real-time-transit-reliability/actions/workflows/ci.yml)
+
 Production-style data engineering project that turns WMATA Metrorail API feeds into a live train board and historical reliability dashboard.
 
 The project has two runnable paths:
